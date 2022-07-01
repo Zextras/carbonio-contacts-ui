@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { reduce, filter, some, startsWith, map, findIndex, trim } from 'lodash';
+import { reduce, filter, some, startsWith, map, findIndex, trim, find, includes } from 'lodash';
 import { ChipInput, Container, Avatar, Text, Row } from '@zextras/carbonio-design-system';
 import { soapFetch } from '@zextras/carbonio-shell-ui';
 import { useSelector } from 'react-redux';
@@ -97,7 +97,7 @@ export default function ContactInput({
 	const [idToRemove, setIdToRemove] = useState('');
 	const [t] = useTranslation();
 	const inputRef = useRef();
-
+	const [enterPressed, setEnterPressed] = useState(false);
 	useEffect(() => {
 		setDefaults(
 			map(filter(defaultValue, (c) => c.id !== idToRemove) ?? [], (obj) => ({
@@ -135,9 +135,63 @@ export default function ContactInput({
 				)
 		)
 	);
+	const isValidEmail = useCallback((email) => emailRegex.test(email), []);
 
+	const editChip = useCallback((text, id) => {
+		setIdToRemove(id);
+		if (inputRef?.current) {
+			inputRef.current.innerText = text;
+		}
+	}, []);
 	const onInputType = useCallback(
 		(e) => {
+			if (e.keyCode && e.keyCode === 13 && !find(options, { id: 'loading' })) {
+				if (options.length > 0) {
+					console.log('vv: hola');
+					setEnterPressed(true);
+					setDefaults((prev) => [
+						...prev,
+						{ ...options[0], label: options[0].label ?? getChipLabel(options[0]) }
+					]);
+
+					if (inputRef?.current) {
+						inputRef.current.innerText = '';
+					}
+					setOptions([]);
+					return;
+				}
+				console.log('xxxx: text', inputRef.current.innerText);
+
+				console.log('xxxx:', { e: inputRef.current.innerText });
+				const valueToAdd = inputRef.current.innerText.replaceAll('\n', '');
+				console.log('xxxx', { valueToAdd });
+				const id = moment().valueOf();
+				const chip = {
+					email: valueToAdd,
+					id,
+					label: valueToAdd,
+					error: !isValidEmail(valueToAdd),
+					actions: [
+						{
+							id: 'action1',
+							label: isValidEmail(valueToAdd)
+								? t('label.edit_email', 'Edit E-mail')
+								: t('label.edit_invalid_email', 'E-mail is invalid, click to edit it'),
+							icon: 'EditOutline',
+							type: 'button',
+							onClick: () => editChip(valueToAdd, id)
+						}
+					]
+				};
+				if (!isValidEmail(valueToAdd)) {
+					chip.avatarIcon = 'AlertCircleOutline';
+				}
+				if (valueToAdd !== '') setDefaults((prev) => [...prev, chip]);
+				if (inputRef?.current) {
+					inputRef.current.innerText = '';
+				}
+				return;
+			}
 			if (e.textContent && e.textContent !== '') {
 				setOptions([
 					{
@@ -195,6 +249,7 @@ export default function ContactInput({
 									},
 									localResults
 								);
+								console.log('xxx:', { normRemoteResults });
 								setOptions(
 									map(
 										filter(normRemoteResults, (c) =>
@@ -227,20 +282,12 @@ export default function ContactInput({
 					});
 			} else setOptions([]);
 		},
-		[allContacts]
+		[allContacts, editChip, isValidEmail, options, t]
 	);
-
-	const isValidEmail = useCallback((email) => emailRegex.test(email), []);
-
-	const editChip = useCallback((text, id) => {
-		setIdToRemove(id);
-		if (inputRef?.current) {
-			inputRef.current.innerText = text;
-		}
-	}, []);
 
 	const onAdd = useCallback(
 		(valueToAdd) => {
+			console.log('vv:', { valueToAdd, enterPressed });
 			if (typeof valueToAdd === 'string') {
 				const id = moment().valueOf();
 				const chip = {
@@ -267,7 +314,7 @@ export default function ContactInput({
 			}
 			return valueToAdd;
 		},
-		[editChip, isValidEmail, t]
+		[editChip, isValidEmail, t, enterPressed]
 	);
 
 	return (
@@ -286,6 +333,8 @@ export default function ContactInput({
 				requireUniqueChips
 				createChipOnPaste
 				pasteSeparators={[',', ' ', ';', '\n']}
+				separators={['NumpadEnter', 'Comma']}
+				wrap="nowrap"
 				{...props}
 			/>
 		</Container>

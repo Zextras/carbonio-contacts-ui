@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only
  */
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import { replaceHistory, getAction, FOLDERS } from '@zextras/carbonio-shell-ui';
 import {
 	Divider,
@@ -20,6 +20,7 @@ import { useDisplayName } from '../../hooks/use-display-name';
 import { contactAction } from '../../store/actions/contact-action';
 import MoveModal from '../contact-actions/move-modal';
 import { selectContact } from '../../store/selectors/contacts';
+import ContactInput from '../../integrations/contact-input';
 
 export default function ContactPreviewPanel() {
 	const [t] = useTranslation();
@@ -150,10 +151,15 @@ export default function ContactPreviewPanel() {
 	);
 
 	const displayName = useDisplayName(contact);
-
+	const [defaultC, setDefaultC] = useState([]);
+	const handleChange = useCallback((c) => {
+		setDefaultC(c);
+	}, []);
+	console.log('vv:', { defaultC });
 	if (contact && displayName) {
 		return (
 			<>
+				<ContactInput defaultValue={defaultC} onChange={handleChange} placeholder="Enter" />
 				<ContactPreviewHeader
 					displayName={displayName}
 					onClose={onClose}
