@@ -145,8 +145,12 @@ export default function ContactInput({
 	}, []);
 	const onInputType = useCallback(
 		(e) => {
-			if (e.keyCode && e.keyCode === 13 && !find(options, { id: 'loading' })) {
-				if (options.length > 0) {
+			console.log('xxxx:', { e: e.nativeEvent.inputType });
+			if (e.keyCode && e.keyCode === 13) {
+				if (inputRef?.current) {
+					inputRef.current.innerText = inputRef.current.innerText.replaceAll('\n', '');
+				}
+				if (options.length > 0 && !find(options, { id: 'loading' })) {
 					console.log('vv: hola');
 					setEnterPressed(true);
 					setDefaults((prev) => [
@@ -323,6 +327,7 @@ export default function ContactInput({
 				disableOptions
 				placeholder={placeholder}
 				confirmChipOnBlur
+				confirmChipOnSpace={false}
 				inputRef={inputRef}
 				onInputType={onInputType}
 				onChange={onChange}
@@ -334,7 +339,6 @@ export default function ContactInput({
 				createChipOnPaste
 				pasteSeparators={[',', ' ', ';', '\n']}
 				separators={['NumpadEnter', 'Comma']}
-				wrap="nowrap"
 				{...props}
 			/>
 		</Container>
