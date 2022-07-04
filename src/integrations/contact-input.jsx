@@ -151,13 +151,14 @@ export default function ContactInput({
 					inputRef.current.innerText = inputRef.current.innerText.replaceAll('\n', '');
 				}
 				if (options.length > 0 && !find(options, { id: 'loading' })) {
-					console.log('vv: hola');
+					console.log('vv: hola', { options });
 					setEnterPressed(true);
-					setDefaults((prev) => [
-						...prev,
-						{ ...options[0], label: options[0].label ?? getChipLabel(options[0]) }
-					]);
-
+					// setDefaults((prev) => [
+					// 	...prev,
+					// 	//	{ ...options[0], label: options[0].label ?? getChipLabel(options[0]) }
+					// 	{ ...options[0]?.value }
+					// ]);
+					onChange([...defaults, { ...options[0]?.value }]);
 					if (inputRef?.current) {
 						inputRef.current.innerText = '';
 					}
@@ -190,7 +191,10 @@ export default function ContactInput({
 				if (!isValidEmail(valueToAdd)) {
 					chip.avatarIcon = 'AlertCircleOutline';
 				}
-				if (valueToAdd !== '') setDefaults((prev) => [...prev, chip]);
+				if (valueToAdd !== '') {
+					//	setDefaults((prev) => [...prev, chip]);
+					onChange([...defaults, { ...chip }]);
+				}
 				if (inputRef?.current) {
 					inputRef.current.innerText = '';
 				}
@@ -286,7 +290,7 @@ export default function ContactInput({
 					});
 			} else setOptions([]);
 		},
-		[allContacts, editChip, isValidEmail, options, t]
+		[allContacts, defaults, editChip, isValidEmail, onChange, options, t]
 	);
 
 	const onAdd = useCallback(
